@@ -301,7 +301,63 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def RecursiveExpectimax(gameState, depth, agent, Max, Root):
+          #Finding the legal actions for the given agent
+          legalActions = gameState.getLegalActions(agent)
+
+          #PacMans actions
+          #now we look for our Max option which happens to be our best case option
+          if Max:
+            #base case
+            if gameState.isLose() or gameState.isWin() or depth == 0:
+              return self.evaluationFunction(gameState)
+
+            action = None 
+            SuccessorState = None
+            MaxScore = -99999
+
+            for actions in legalActions:
+              #set the successor state
+              SuccessorState = gameState.generateSuccessor(agent, actions)
+              #Recursively call the function to find the first ghost agent
+              ActionValue = RecursiveExpectimax(SuccessorState, depth, 1, False, False)
+              #If our ActionValue is bigger than our old max then we must set it as the new max
+              if ActionValue > MaxScore:
+                MaxScore = ActionValue
+                action = actions
+
+            #if our action that we are looking for is at the root then return the root
+            if Root:
+              return action
+            #if not, then we just return our maxscore at the current depth
+            else:
+              return MaxScore
+
+
+          #Ghost Agent actions
+          #now we look for our Min option
+          else:
+            #base case
+            if gameState.isLose() or gameState.isWin() or depth == 0:
+              return self.evaluationFunction(gameState)
+
+            SuccessorState = None
+            ActionValue = 0
+
+            for actions in legalActions:
+              #set the successor state
+              SuccessorState = gameState.generateSuccessor(agent, actions)
+              #Recursively call the function to revert back to pacmans actions
+              if (agent + 1) % gameState.getNumAgents() == 0:
+                ActionValue += RecursiveExpectimax(SuccessorState, depth - 1, 0, True, False)
+              #Recursively call the function for ghosts actions
+              else:
+                ActionValue += RecursiveExpectimax(SuccessorState, depth, agent + 1, False, False)
+
+            return (float(ActionValue) / len(legalActions))
+
+        #now we call the recursive function implemented above
+        return RecursiveExpectimax(gameState, self.depth, 0, True, True)
 
 def betterEvaluationFunction(currentGameState):
     """
