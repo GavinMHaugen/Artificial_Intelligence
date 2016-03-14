@@ -160,15 +160,15 @@ class MinimaxAgent(MultiAgentSearchAgent):
             SuccessorState = None
             MaxScore = -99999
 
-            for move in legalActions:
+            for actions in legalActions:
               #set the successor state
-              SuccessorState = gameState.generateSuccessor(agent, move)
+              SuccessorState = gameState.generateSuccessor(agent, actions)
               #Recursively call the function to find the first ghost agent
               ActionValue = RecursiveMiniMax(SuccessorState, depth, 1, False, False)
               #If our ActionValue is bigger than our old max then we must set it as the new max
               if ActionValue > MaxScore:
                 MaxScore = ActionValue
-                action = move
+                action = actions
 
             #if our action that we are looking for is at the root then return the root
             if Root:
@@ -184,9 +184,9 @@ class MinimaxAgent(MultiAgentSearchAgent):
             SuccessorState = None
             MinScore = 99999
 
-            for move in legalActions:
+            for actions in legalActions:
               #set the successor state
-              SuccessorState = gameState.generateSuccessor(agent, move)
+              SuccessorState = gameState.generateSuccessor(agent, actions)
               #Recursively call the function to revert back to pacmans actions
               if (agent + 1) % gameState.getNumAgents() == 0:
                 ActionValue = RecursiveMiniMax(SuccessorState, depth - 1, 0, True, False)
@@ -199,7 +199,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 MinScore = ActionValue
             return MinScore
 
-        #now we call the recursive function implemente above
+        #now we call the recursive function implemented above
         return RecursiveMiniMax(gameState, self.depth, 0, True, True)
 
 
@@ -213,7 +213,80 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #Since this evaluation and the previous evaluation were very similar to each other
+        #I'm just going to impolement it the same way but with the alpha and beta conditions
+        def RecursiveAlphaBetaPruning(gameState, depth, agent, Max, Root, alpha, beta):
+
+          #Base Case for our algorithm
+          if gameState.isLose() or gameState.isWin() or depth == 0:
+            return self.evaluationFunction(gameState)
+
+          #Finding the legal actions for the given agent
+          legalActions = gameState.getLegalActions(agent)
+
+          #PacMans actions
+          #now we look for our Max option which happens to be our best case option
+          if Max:
+            action = None 
+            SuccessorState = None
+            MaxScore = -99999
+
+            for actions in legalActions:
+              #set the successor state
+              SuccessorState = gameState.generateSuccessor(agent, actions)
+              #Recursively call the function to find the first ghost agent
+              ActionValue = RecursiveAlphaBetaPruning(SuccessorState, depth, 1, False, False, alpha, beta)
+              #If our ActionValue is bigger than our old max then we must set it as the new max
+              if ActionValue > MaxScore:
+                MaxScore = ActionValue
+                action = actions
+
+              #checking our alpha beta conditions
+              if ActionValue > alpha:
+                alpha = ActionValue
+              #if our beta is greater than our alpha value we break the loop
+              if beta < alpha:
+                break
+
+            #if our action that we are looking for is at the root then return the root
+            if Root:
+              return action
+            #if not, then we just return our maxscore at the current depth
+            else:
+              return MaxScore
+
+
+          #Ghost Agent actions
+          #now we look for our Min option
+          else:
+            SuccessorState = None
+            MinScore = 99999
+
+            for actions in legalActions:
+              #set the successor state
+              SuccessorState = gameState.generateSuccessor(agent, actions)
+              #Recursively call the function to revert back to pacmans actions
+              if (agent + 1) % gameState.getNumAgents() == 0:
+                ActionValue = RecursiveAlphaBetaPruning(SuccessorState, depth - 1, 0, True, False, alpha, beta)
+              #Recursively call the function for ghosts actions
+              else:
+                ActionValue = RecursiveAlphaBetaPruning(SuccessorState, depth, agent + 1, False, False, alpha, beta)
+
+              #If our ActionValue is smaller than our old min then we must set it as the new min
+              if ActionValue < MinScore:
+                MinScore = ActionValue
+
+              #checking our alpha beta conditions
+              if ActionValue < beta:
+                beta = ActionValue
+
+              if beta < alpha:
+                break
+
+            return MinScore
+        #now, we recurse
+        return RecursiveAlphaBetaPruning(gameState, self.depth, 0, True, True, -99999, 99999)
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
